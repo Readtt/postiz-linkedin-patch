@@ -94,10 +94,7 @@ def patch_text(text: str) -> tuple[str, int]:
                     edits += 1
                     return m.group(1) + normalize_scopes_literal(m.group(2))
 
-                part2, n = SCOPES_RE.subn(repl, part, count=1)
-                # subn with function - count may not work that way in all versions
-                part2 = SCOPES_RE.sub(repl, part, count=1)
-                out.append(part2)
+                out.append(SCOPES_RE.sub(repl, part, count=1))
             else:
                 out.append(part)
         return "".join(out), edits
