@@ -6,7 +6,7 @@ import pathlib
 import re
 import sys
 
-ROOTS = [pathlib.Path("/app"), pathlib.Path("/www"), pathlib.Path("/")]
+ROOTS = [pathlib.Path("/app"), pathlib.Path("/www")]
 EXTS = {".js", ".mjs", ".cjs", ".map"}
 
 # Common compiled variants of the scopes array.
@@ -122,8 +122,17 @@ def main() -> int:
     for root in ROOTS:
         if not root.exists():
             continue
-        for p in root.rglob("*"):
-            if not p.is_file():
+        try:
+            walker = root.rglob("*")
+        except PermissionError as e:
+            print(f"skip root {root}: {e}")
+            continue
+        for p in walker:
+            try:
+                is_file = p.is_file()
+            except PermissionError:
+                continue
+            if not is_file:
                 continue
             if p.suffix not in EXTS and p.name not in {"main.js", "index.js"}:
                 if p.suffix not in EXTS:
@@ -136,10 +145,6 @@ def main() -> int:
                 continue
             if real in seen:
                 continue
-            # Stay inside likely app trees for / to avoid scanning the whole OS
-            if root == pathlib.Path("/"):
-                if not str(real).startswith(("/app", "/www", "/home", "/opt")):
-                    continue
             seen.add(real)
             try:
                 raw = p.read_bytes()
